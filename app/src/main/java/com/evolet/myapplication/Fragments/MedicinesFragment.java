@@ -8,7 +8,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
+
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -85,10 +85,9 @@ public class MedicinesFragment extends Fragment{
                     }
                 }
 
-            }
-            else{
-            Toast.makeText(getContext(), "No data",Toast.LENGTH_SHORT ).show();
-            }
+            }else{
+                    Toast.makeText(getContext(),"No data" ,Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
