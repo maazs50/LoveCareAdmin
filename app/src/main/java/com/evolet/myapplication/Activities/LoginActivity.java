@@ -1,6 +1,7 @@
 package com.evolet.myapplication.Activities;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -48,28 +49,42 @@ public class LoginActivity extends Activity {
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String loginEmail=loginEmailText.getText().toString();
-                String loginPass =loginPassText.getText().toString();
+               final String loginEmail=loginEmailText.getText().toString();
+                final String loginPass =loginPassText.getText().toString();
                 if (!TextUtils.isEmpty(loginEmail)&&!TextUtils.isEmpty(loginPass)){
+
+                    final ProgressDialog progresRing = ProgressDialog.show(LoginActivity.this, "Love and Care Admin", "Logging in...", true);
+                    progresRing.setCancelable(false);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+
                     mAuth.signInWithEmailAndPassword(loginEmail, loginPass)
                             .addOnCompleteListener( new OnCompleteListener<AuthResult>() {
                                 @Override
                                 public void onComplete( Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
                                         // Sign in success, update UI with the signed-in user's information
-
+                                        progresRing.dismiss();
                                         sendToMain();
 
 
 
                                     } else {
-
+                                        progresRing.dismiss();
                                         // If sign in fails, display a message to the user.
                                         Toast.makeText(LoginActivity.this, "Invalid UserName or Password",Toast.LENGTH_SHORT).show();
 
                                     }
                                 }
                             });
+                            } catch (Exception e) {
+
+                            }
+
+                        }
+                    }).start();
                 }else{
                     Toast.makeText(LoginActivity.this,"Enter all the fields",Toast.LENGTH_LONG).show();
                 }

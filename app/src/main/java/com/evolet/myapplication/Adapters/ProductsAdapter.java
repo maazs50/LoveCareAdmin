@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.evolet.myapplication.Activities.EditProduct;
 import com.evolet.myapplication.Items.ProductItem;
 import com.evolet.myapplication.R;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -50,7 +51,7 @@ public class ProductsAdapter extends ArrayAdapter<ProductItem> {
         ImageView prodImage = (ImageView)rootView.findViewById(R.id.prodImage);
         final TextView prodName = (TextView)rootView.findViewById(R.id.prodName);
         TextView prodPrice = (TextView)rootView.findViewById(R.id.prodPricePerUnit);
-        TextView prodUnit = (TextView)rootView.findViewById(R.id.prodUnit);
+        final TextView prodUnit = (TextView)rootView.findViewById(R.id.prodUnit);
         final ImageView prodDel=(ImageView)rootView.findViewById(R.id.deleteProduct);
         ImageView prodEdit=(ImageView)rootView.findViewById(R.id.editProduct);
 
@@ -76,28 +77,28 @@ public class ProductsAdapter extends ArrayAdapter<ProductItem> {
 
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
                 alertDialogBuilder.setMessage("Do you want to delete this item?");
-                        alertDialogBuilder.setPositiveButton("yes",
-                                new DialogInterface.OnClickListener() {
+                alertDialogBuilder.setPositiveButton("yes",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface arg0, int arg1) {
+                                String name=productItems.get(position).getProdName();
+                                String category=productItems.get(position).getProdCategory();
+                                db.document("/"+category+"/"+name).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                                     @Override
-                                    public void onClick(DialogInterface arg0, int arg1) {
-                                        String name=productItems.get(position).getProdName();
-                                        String category=productItems.get(position).getProdCategory();
-                                        db.document("/"+category+"/"+name).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<Void> task) {
-                                                Toast.makeText(getContext(),"Item deleted!",Toast.LENGTH_LONG).show();
-                                                notifyDataSetChanged();
-
-                                            }
-                                        });
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        Toast.makeText(getContext(),"Item deleted!",Toast.LENGTH_LONG).show();
+                                        notifyDataSetChanged();
 
                                     }
                                 });
 
+                            }
+                        });
+
                 alertDialogBuilder.setNegativeButton("No",new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                    return;
+                        return;
                     }
                 });
 
@@ -111,7 +112,17 @@ public class ProductsAdapter extends ArrayAdapter<ProductItem> {
         prodEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(),"Edit is click" , Toast.LENGTH_SHORT).show();
+                String name=productItems.get(position).getProdName();
+                String cat=productItems.get(position).getProdCategory();
+                String price=productItems.get(position).getProdPrice();
+                String unit=productItems.get(position).getUnit();
+
+                Intent editProduct=new Intent(getContext(), EditProduct.class);
+                editProduct.putExtra("name",name);
+                editProduct.putExtra("price",price );
+                editProduct.putExtra("unit", unit);
+                editProduct.putExtra("cat",cat );
+                context.startActivity(editProduct);
             }
         });
 

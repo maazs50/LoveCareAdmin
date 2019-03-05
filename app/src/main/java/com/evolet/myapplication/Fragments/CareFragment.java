@@ -74,7 +74,7 @@ public class CareFragment extends Fragment {
 
                 }
                 else{
-                    Toast.makeText(getContext(),"No data" ,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "No data",Toast.LENGTH_SHORT ).show();
                 }
 
             }

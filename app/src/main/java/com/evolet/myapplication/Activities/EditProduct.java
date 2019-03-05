@@ -8,25 +8,24 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.*;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.PersistableBundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.evolet.myapplication.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -47,135 +46,124 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-
-public class AddProduct extends AppCompatActivity {
-    ProgressDialog progress;
+public class EditProduct extends AppCompatActivity {
     private int GALLERY = 1, CAMERA = 2;
     private static final String IMAGE_DIRECTORY = "/evolet";
-    Button addImage;
     ImageView selectedImage;
-    EditText prodName,prodPrice,prodUnit;
-    Button submit;
+    EditText prodName,prodPrice,prodUnit,prodCat;
+    Button submit,addImage;
     FirebaseFirestore mFirestore;
+    ProgressDialog progressDialog;
     private Uri postImageuri=null;
     StorageReference mStorageRef;
-    //dRef holds the id of the document and is used when updating the document for url
-    String dRef="";
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_product);
 
-        final Spinner productCategorySpinner = (Spinner)findViewById(R.id.prodCategory);
-        String[] categories = new String[]{"Medicine","Grocery","Care"};
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getSupportActionBar().setTitle("Edit Product");
+        setContentView(R.layout.activity_edit_product);
         prodName=findViewById(R.id.prodName);
         prodPrice=findViewById(R.id.prodPrice);
         prodUnit=findViewById(R.id.prodUnit);
         submit=findViewById(R.id.submit);
-
-
-        mStorageRef=FirebaseStorage.getInstance().getReference();
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(AddProduct.this,android.R.layout.simple_spinner_dropdown_item,categories);
-        productCategorySpinner.setAdapter(adapter);
+        selectedImage = (ImageView)findViewById(R.id.selectedImage);
+        prodCat=findViewById(R.id.prodCategory);
         mFirestore=FirebaseFirestore.getInstance();
+        mStorageRef= FirebaseStorage.getInstance().getReference();
+        /*****
+         *Getting the values to edit
+         */
 
+        String name=getIntent().getExtras().getString("name");
+        String price=getIntent().getExtras().getString("price");
+        String unit=getIntent().getExtras().getString("unit");
+        String cat=getIntent().getExtras().getString("cat");
+        prodName.setText(name);
+        prodPrice.setText(price);
+        prodUnit.setText(unit);
+        prodCat.setText(cat);
 
-        selectedImage = (ImageView)findViewById(R.id.selectedImage) ;
-
-        addImage = (Button)findViewById(R.id.addImage);
+        addImage=findViewById(R.id.addImage);
         addImage.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-
-                showPictureDialog();
+            public void onClick(View view) {
+                    showPictureDialog();
             }
         });
-
-
-
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //include a progress bar whenever network call is there
-
-
                 final String name=prodName.getText().toString();
                 final String price=prodPrice.getText().toString();
                 final String unit=prodUnit.getText().toString();
-                final String category=productCategorySpinner.getSelectedItem().toString();
+                final String category=prodCat.getText().toString();
                 //Check there is no empty list
                 if (!TextUtils.isEmpty(name)&&!TextUtils.isEmpty(price)&&!TextUtils.isEmpty(unit)&&!TextUtils.isEmpty(category)){
-                    //Progress Bar if nothing is null
-                    final ProgressDialog progresRing = ProgressDialog.show(AddProduct.this, "Adding a product", "saving...", true);
+                    final ProgressDialog progresRing = ProgressDialog.show(EditProduct.this, "Saving a product", "saving...", true);
                     progresRing.setCancelable(false);
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                final DocumentReference docRef=mFirestore.collection(category).document(name);
-                                dRef=docRef.toString();
-                                final Map<String, Object> data=new HashMap<>();
-                                data.put("id", docRef);
-                                data.put("name", name);
-                                data.put("price", price);
-                                data.put("unit",unit );
-                                data.put("category",category);
+                    Map<String, Object> data=new HashMap<>();
+                   final DocumentReference docRef=mFirestore.collection(category).document(name);
+                    data.put("id", docRef);
+                    data.put("name", name);
+                    data.put("price", price);
+                    data.put("unit",unit );
+                    data.put("category",category);
+                    data.put("time", FieldValue.serverTimestamp());
+                    docRef.set(data).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
 
-                                data.put("time", FieldValue.serverTimestamp());
-                                docRef.set(data).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            if (task.isSuccessful()&&postImageuri!=null){
+
+                                final String randonName= UUID.randomUUID().toString();
+                                //Saving the image
+                                StorageReference filepath=mStorageRef.child(category).child("images").child(randonName+".jpg");
+                                filepath.putFile(postImageuri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                     @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
+                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                        final String downloadUrl = taskSnapshot.getDownloadUrl().toString();
+                                        //Add the url to the existing document
+                                        Map<String, Object> data1=new HashMap<>();
+                                        data1.put("url",downloadUrl );
+                                        docRef.update(data1).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                if (task.isSuccessful()){
+                                                    prodName.setText("");
+                                                    prodPrice.setText("");
+                                                    prodUnit.setText("");
+                                                    selectedImage.setImageDrawable(null);
 
-                                        if (task.isSuccessful()&&postImageuri!=null){
+                                                    progresRing.dismiss();
+                                                    Toast.makeText(getApplicationContext(),"Product Saved!" ,Toast.LENGTH_SHORT ).show();
 
-                                            final String randonName= UUID.randomUUID().toString();
-                                            //Saving the image
-                                            StorageReference filepath=mStorageRef.child(category).child("images").child(randonName+".jpg");
-                                            filepath.putFile(postImageuri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                                @Override
-                                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                                    final String downloadUrl = taskSnapshot.getDownloadUrl().toString();
-                                                    //Add the url to the existing document
-                                                    Map<String, Object> data1=new HashMap<>();
-                                                    data1.put("url",downloadUrl );
-                                                    docRef.update(data1).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                        @Override
-                                                        public void onComplete(@NonNull Task<Void> task) {
-                                                            if (task.isSuccessful()){
-                                                                prodName.setText("");
-                                                                prodPrice.setText("");
-                                                                prodUnit.setText("");
-                                                                selectedImage.setImageDrawable(null);
-                                                                progresRing.dismiss();
-                                                                Toast.makeText(getApplicationContext(),"Product Saved!" ,Toast.LENGTH_SHORT ).show();
-
-                                                            }
-                                                        }
-                                                    });
                                                 }
-                                            });
-                                        }
-                            /*
-                            /If image is null
-                             */
-                                        else if (task.isSuccessful()){
-                                            prodName.setText("");
-                                            prodPrice.setText("");
-                                            prodUnit.setText("");
-                                            progresRing.dismiss();
-                                            Toast.makeText(getApplicationContext(),"Product Saved!" ,Toast.LENGTH_SHORT ).show();
-                                        }
+                                            }
+                                        });
                                     }
                                 });
+                            }
+                            else if (task.isSuccessful()){
+                                prodName.setText("");
+                                prodPrice.setText("");
+                                prodUnit.setText("");
+                                progresRing.dismiss();
+                                Toast.makeText(getApplicationContext(),"Product Saved!" ,Toast.LENGTH_SHORT ).show();
+                            }
+                        }
+                    });
 
-
-                          } catch (Exception e) {
+                            } catch (Exception e) {
 
                             }
 
                         }
                     }).start();
-
 
                 }else{
                     Toast.makeText(getApplicationContext(),"Enter all values" ,Toast.LENGTH_SHORT ).show();
@@ -183,13 +171,11 @@ public class AddProduct extends AppCompatActivity {
                 }
 
 
+
             }
         });
 
-
     }
-
-
     private void showPictureDialog(){
         AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
         pictureDialog.setTitle("Select Action");
@@ -215,38 +201,38 @@ public class AddProduct extends AppCompatActivity {
 
 
     public void choosePhotoFromGallary() {
-        if (ContextCompat.checkSelfPermission(AddProduct.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (ContextCompat.checkSelfPermission(EditProduct.this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(AddProduct.this,
+            if (ActivityCompat.shouldShowRequestPermissionRationale(EditProduct.this,
                     Manifest.permission.CAMERA)) {
                 Toast.makeText(this, "Permission Denied..", Toast.LENGTH_SHORT).show();
             } else {
-                ActivityCompat.requestPermissions(AddProduct.this,
+                ActivityCompat.requestPermissions(EditProduct.this,
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},GALLERY
                 );
             }
         }else {
             Intent galleryIntent = new Intent(Intent.ACTION_PICK,
-                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
             startActivityForResult(galleryIntent, GALLERY);
         }
     }
 
     private void takePhotoFromCamera() {
-        if (ContextCompat.checkSelfPermission(AddProduct.this, Manifest.permission.CAMERA)
+        if (ContextCompat.checkSelfPermission(EditProduct.this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
-            if (ActivityCompat.shouldShowRequestPermissionRationale(AddProduct.this,
+            if (ActivityCompat.shouldShowRequestPermissionRationale(EditProduct.this,
                     Manifest.permission.CAMERA)) {
                 Toast.makeText(this, "Permission Denied..", Toast.LENGTH_SHORT).show();
             } else {
-                ActivityCompat.requestPermissions(AddProduct.this,
+                ActivityCompat.requestPermissions(EditProduct.this,
                         new String[]{Manifest.permission.CAMERA},
                         CAMERA);
             }
         }else{
-            Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(intent, CAMERA);
         }
     }
@@ -268,7 +254,7 @@ public class AddProduct extends AppCompatActivity {
 
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Toast.makeText(AddProduct.this, "Failed!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditProduct.this, "Failed!", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -313,5 +299,4 @@ public class AddProduct extends AppCompatActivity {
         }
         return "";
     }
-
 }
