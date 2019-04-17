@@ -14,11 +14,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activities.AddProduct"></activity>
+        <activity android:name=".Activities.OrderDetails"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".Activities.AddProduct"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Activities.LoginActivity"
-            android:label="@string/title_activity_home" />
-        <activity android:name=".Activities.HomeActivity">
+            android:label="@string/title_activity_home"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".Activities.HomeActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,7 +36,13 @@
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
-        <activity android:name=".Activities.EditProduct"/>
+
+        <activity
+            android:name=".Activities.EditProduct"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".Activities.ForgotPassword"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

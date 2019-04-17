@@ -5,9 +5,22 @@
     android:layout_height="match_parent"
     tools:context=".Fragments.OrdersFragment">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:text="Order History"
+        android:textColor="@color/black"
+        android:padding="10dp"
+        android:gravity="center"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:background="#FFF8E1"
+        android:layout_height="wrap_content" />
     <ListView
+        android:layout_marginTop="35dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="55dp"
+        android:background="#FFECB3"
         android:id="@+id/ordersListView"/>
 
 </FrameLayout>

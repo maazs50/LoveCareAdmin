@@ -53,7 +53,6 @@ public class EditProduct extends AppCompatActivity {
     EditText prodName,prodPrice,prodUnit,prodCat;
     Button submit,addImage;
     FirebaseFirestore mFirestore;
-    ProgressDialog progressDialog;
     private Uri postImageuri=null;
     StorageReference mStorageRef;
 
@@ -180,8 +179,7 @@ public class EditProduct extends AppCompatActivity {
         AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
         pictureDialog.setTitle("Select Action");
         String[] pictureDialogItems = {
-                "Select photo from gallery",
-                "Capture photo from camera" };
+                "Select photo from gallery"};
         pictureDialog.setItems(pictureDialogItems,
                 new DialogInterface.OnClickListener() {
                     @Override

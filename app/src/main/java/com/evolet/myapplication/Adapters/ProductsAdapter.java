@@ -65,8 +65,8 @@ public class ProductsAdapter extends ArrayAdapter<ProductItem> {
 
 
         prodName.setText(productItems.get(position).getProdName());
-        prodPrice.setText(productItems.get(position).getProdPrice());
-        prodUnit.setText(productItems.get(position).getUnit());
+        prodPrice.setText("Rs ₹"+productItems.get(position).getProdPrice());
+        prodUnit.setText("Units: "+productItems.get(position).getUnit());
         //Action when user clicks on button
         prodDel.setOnClickListener(new View.OnClickListener() {
             @Override
